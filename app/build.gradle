@@ -1,0 +1,135 @@
+import com.kailaisi.buildsrc.App
+import com.kailaisi.buildsrc.Libs
+import com.kailaisi.buildsrc.Versions
+
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdk Versions.compileSdk
+
+    defaultConfig {
+        applicationId App.applicationId
+        minSdk Versions.minSdk
+        targetSdk Versions.targetSdk
+
+        versionName "1.0.0"
+        if (project.hasProperty('VERSION_CODE')) {
+            versionCode Integer.parseInt(VERSION_CODE)
+        } else {
+            versionCode 15
+        }
+
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
+        manifestPlaceholders = [
+                "app_name"      : "@string/app_name",
+                "network_config": "@xml/network_security_config",
+        ]
+        compileOptions {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
+        }
+        ndk {
+            abiFilters 'armeabi-v7a', "arm64-v8a"
+        }
+        kapt {
+            arguments {
+                arg("AROUTER_MODULE_NAME", project.getName())
+            }
+        }
+    }
+
+
+    signingConfigs {
+
+    }
+
+    /**
+     * buildTypes必须放在signingConfigs后面
+     */
+    buildTypes {
+        release {
+            minifyEnabled true
+            debuggable false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            multiDexKeepProguard file('multidex-config.pro')
+        }
+        debug {
+            minifyEnabled true
+            debuggable true
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            multiDexKeepProguard file('multidex-config.pro')
+            addManifestPlaceholders(["network_config": "@xml/network_security_config"])
+        }
+
+    }
+    android.applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def outputFile = output.outputFile
+            def buildTypeName = variant.buildType.name
+            //是否为Jenkins打包，输出路径不同
+            if (outputFile != null && outputFile.name.endsWith('.apk')) {
+                //BUILD_PATH为服务器输出路径
+                outputFileName = "test-" + buildTypeName + "-" + versionCode + ".apk"
+            }
+        }
+    }
+    compileOptions {
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
+    }
+    lintOptions {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+
+    buildFeatures {
+        //noinspection DataBindingWithoutKapt
+        dataBinding = true
+        viewBinding = true
+    }
+
+    packagingOptions {
+        exclude 'META-INF/proguard/androidx-annotations.pro'
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+
+dependencies {
+    implementation fileTree(include: ['*.jar', '*.aar'], dir: 'libs')
+    api Libs.AndroidX.AppCompat.appCompat
+
+    implementation Libs.Kotlin.stdlibJdk7
+
+    implementation "io.github.kailaisi.vmserviceurilib:flutter_release:0.0.1"
+    implementation "io.flutter:flutter_embedding_release:1.0.0-cdbeda788a293fa29665dc3fa3d6e63bd221cb0d"
+
+    implementation Libs.AndroidX.AppCompat.appCompat
+    implementation Libs.AndroidX.Activity.activity
+    implementation Libs.AndroidX.Activity.activityKtx
+    implementation Libs.AndroidX.Fragment.fragment
+    implementation Libs.AndroidX.Fragment.fragmentKtx
+    // 插件升级后出现kotlin-stdlib-jdk版本冲突在这里解决
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20")
+
+}

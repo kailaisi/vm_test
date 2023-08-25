@@ -1,0 +1,68 @@
+import com.kailaisi.buildsrc.Libs
+
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    ext.kotlin_version = '1.8.10'
+    ext.anko_version = '0.10.8'
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url 'https://maven.aliyun.com/repository/public'
+            allowInsecureProtocol = true
+        }
+        maven {
+            url 'https://dl.bintray.com/umsdk/release'
+            allowInsecureProtocol = true
+        }
+    }
+    dependencies {
+        classpath Libs.androidGradlePlugin
+        classpath Libs.Kotlin.gradlePlugin
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/central/' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter/' }
+        maven { url 'https://maven.aliyun.com/repository/google/' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' }
+        maven { url "https://jitpack.io" }
+        maven {
+            url "https://zendesk.jfrog.io/artifactory/repo"
+        }
+        maven {
+            url 'https://storage.googleapis.com/download.flutter.io'
+        }
+    }
+
+    allprojects {
+        gradle.projectsEvaluated {
+            tasks.withType(JavaCompile) {
+                options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+            }
+        }
+        configurations {
+            all {
+                resolutionStrategy {
+                    dependencySubstitution {
+                        substitute module("androidx.fragment:fragment:1.0.0") using module("androidx.fragment:fragment:1.5.5")
+                    }
+                }
+            }
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
